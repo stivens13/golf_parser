@@ -1,0 +1,25 @@
+manager
+director
+assistant
+controller
+golf services
+executive chef
+superintendent
+chef
+coach
+supervisor
+coordinator
+professional
+accounts receivable
+payroll
+human resources
+accounts payable
+receptionist
+superintendant
+officer
+sergeant
+controller
+accountant
+attendant
+communications and design
+reception/member services
