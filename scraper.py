@@ -36,7 +36,7 @@ def write_xlsx():
 
 
 def get_urls():
-    with open("test_urls.txt") as f:
+    with open("urls.txt") as f:
         for line in f:
             urls.append(line)
 
@@ -195,8 +195,11 @@ def is_name(line):
 
 def is_position(line):
     # line = line.lower().replace("/", "")
-    line = line.lower().replace("/", "").replace(':', '').replace(',', '')
+    # line = line.lower().replace("/", " ").replace(':', ' ').replace(',', ' ')
+    # line = re.sub('\s+', ' ', line)
     # print(line)
+    line = line.lower()
+    line = re.sub('[^a-zA-Z]', ' ', line)
 
     no_space = re.sub("[^a-zA-Z]+", "", line)
     # return [position in line for position in positions_list]
@@ -205,8 +208,9 @@ def is_position(line):
 
     words = line.split(' ')
     # print(positions_list)
-    for word in words:
-        if word in positions_list:
+    for n in range(len(words) - 1):
+        adj = words[n] + ' ' + words[n+1]
+        if words[n] in positions_list or adj in positions_list:
             return True
 
     return False
