@@ -1,20 +1,29 @@
-terms of use
-begin custom
-page footer
-end custom
+termsofuse
+begincustom
+pagefooter
+endcustom
 footer
-embed code
+embedcode
 membersfirst
 wrapper
 privacy
 header
 <div
-member login
-keep me logged in
-not a member yet?
+memberlogin
+keepmeloggedin
+notamemberyet
 request
-about us
-get more information
-work with us
-meet the team
-terms of use
+aboutus
+getmoreinformation
+workwithus
+meettheteam
+requestinfotoday
+clubpersonnel
+username:
+password:
+rememberme
+togglenavigation
+login
+username
+password
+submit

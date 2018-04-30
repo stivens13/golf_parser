@@ -23,3 +23,8 @@ accountant
 attendant
 communications and design
 reception/member services
+communications and design
+professional
+accounts receivable
+payroll human resources
+accounts payable

@@ -1,13 +1,11 @@
-# import scrapy
-# import pandas as pd
-# import requests
-
 from bs4 import BeautifulSoup, Comment
 import re
 from urllib.request import urlopen
 from collections import OrderedDict
 from nltk.corpus import stopwords
 from Person import Person
+import csv
+
 
 urls = []
 people = []
@@ -21,8 +19,20 @@ stop_words.add('bar')
 stop_words.add('of')
 
 
+xlsx_file = "database.xlsx"
+
 phone_regex = ".*?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).*?"
 email_regex = "[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.[a-z]+"
+
+
+def write_xlsx():
+
+    if people:
+        person = people.pop(0)
+        info = person.get_info()
+        with open("doc.csv", 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow(info)
 
 
 def get_urls():
@@ -32,31 +42,31 @@ def get_urls():
 
 
 def remove_garbage(body):
-    # body = soup.body
-    # soup.head.decompose()
-    if body.footer:
-        body.footer.decompose()
 
-    if body.header:
-        body.header.decompose()
+    try:
+        if body.footer:
+            body.footer.decompose()
 
-    comments = body.findAll(text=lambda text: isinstance(text, Comment))
-    [comment.extract() for comment in comments]
+        if body.header:
+            body.header.decompose()
 
-    while body.script:
-        body.script.decompose()
-    while body.style:
-        body.style.decompose()
-    while body.link:
-        body.link.decompose()
-    while body.img:
-        body.img.decompose()
+        comments = body.findAll(text=lambda text: isinstance(text, Comment))
+        [comment.extract() for comment in comments]
+
+        while body.script:
+            body.script.decompose()
+        while body.style:
+            body.style.decompose()
+        while body.link:
+            body.link.decompose()
+        while body.img:
+            body.img.decompose()
+    except Exception as e:
+        with open("failed.txt", "a") as f:
+            f.write(body)
+        print("Url failed: " + body)
 
     return body
-
-# def get_person(data):
-#     for line in data:
-#         if()
 
 
 def get_phones_emails(body):
@@ -69,44 +79,111 @@ def get_phones_emails(body):
     return phones, emails
 
 
-def create_people(data):
+def strip_string(str):
+    return str.lstrip().rstrip()
 
-    new_data = []
 
-    for entry in data:
+def create_people(data, url):
 
-        # print(entry)
-        # words = entry.split(' ')
+    prev = Person("dummy", "dummy", "dummy", "dummy", "dummy")
 
-        # for word in words:
+    for k in range(len(data) - 4):
+        n = k
 
-        if is_name(entry):
-            print(entry)
+        data[n] = data[n].lstrip().rstrip()
+        entry = data[n]
 
-        # if is_position(entry) == 1 or is_phone_number(entry) or is_email(entry):
-        #     new_data.append(entry)
-        #     break
+        name = ""
+        position = ""
+        phone = ""
+        email = ""
 
-    # for entry in new_data:
-    #     print(entry)
+        if is_name(data[n]) and is_position(data[n]) and (',' in data[n] or ':' in data[n]):
+            words = []
+
+            if ':' in data[n]:
+                words = data[n].split(':')
+
+            elif ',' in data[n]:
+                words = data[n].split(',')
+
+            if is_name(words[0]):
+                name = words[0]
+                position = words[1]
+            else:
+                position = words[0]
+                name = words[1]
+
+        elif is_name(data[n]) or is_position(data[n]):
+            if is_name(data[n]):
+                name = data[n]
+
+                if is_position(data[n-1]):
+                    position = data[n-1]
+                    n += 1
+
+                elif is_position(data[n+1]):
+                    position = data[n+1]
+                    n += 2
+
+            elif is_position(data[n]):
+                position = data[n]
+
+                if is_name(data[n - 1]):
+                    name = data[n - 1]
+                    n += 1
+
+                elif is_name(data[n + 1]):
+                    name = data[n + 1]
+                    n += 2
+
+        if not is_phone_number(data[n]) and not is_email(data[n]):
+            n += 1
+
+        if not is_phone_number(data[n]) and not is_email(data[n]):
+            n -= 2
+
+        if is_phone_number(data[n]) or is_email(data[n]):
+            if is_phone_number(data[n]):
+                phone = data[n]
+
+                if is_email(data[n - 1]):
+                    email = data[n - 1]
+
+                elif is_email(data[n + 1]):
+                    email = data[n + 1]
+
+            elif is_email(data[n]):
+                email = data[n]
+
+                if is_phone_number(data[n - 1]):
+                    phone = data[n - 1]
+
+                elif is_phone_number(data[n + 1]):
+                    phone = data[n + 1]
+
+        if not name and not position and not phone and not email:
+            continue
+
+        elif name and (position or phone or email) and name != prev.name:
+            person = Person(name, position, phone, email, url)
+            people.append(person)
+            prev = person
+            write_xlsx()
 
 
 def in_filter(line):
-    # print(line)
-    line = line.lower()
-    words = str(line).split(' ')
-    for word in words:
-        if word in filtered:
-            return True
+
+    line = line.lower().strip()
+    line = re.sub("[^a-zA-Z]+", "", line)
+    if line in filtered:
+        return True
 
     return False
 
 
 def is_name(line):
-    # if ',' or ':' in line:
-    #     return 2
-
-    line = line.lower()
+    line = line.lower().strip(':').strip('/')
     words = line.split(' ')
 
     for word in words:
@@ -117,12 +194,19 @@ def is_name(line):
 
 
 def is_position(line):
-    line = line.lower()
-    # return [position in line for position in positions_list]
+    # line = line.lower().replace("/", "")
+    line = line.lower().replace("/", "").replace(':', '').replace(',', '')
+    # print(line)
 
+    no_space = re.sub("[^a-zA-Z]+", "", line)
+    # return [position in line for position in positions_list]
+    if no_space in positions_list:
+        return True
+
+    words = line.split(' ')
     # print(positions_list)
-    for position in positions_list:
-        if position in line:
+    for word in words:
+        if word in positions_list:
             return True
 
     return False
@@ -141,12 +225,6 @@ def get_names():
         for line in f:
             name_list.add(line.strip('\n').lower())
 
-    # with open("last_names_dict.txt") as ff:
-    #     for line in ff:
-    #         name_list.append(line.strip('\n'))
-
-    # print((name_list))
-
 
 def get_positions():
     with open("positions.txt") as f:
@@ -162,51 +240,82 @@ def get_filter():
 
 def get_soup(url):
 
-    try:
-        html = urlopen(url)
-        type(html)
-        soup = BeautifulSoup(html, "html.parser")
-        return soup
-    except Exception as e:
-        with open("failed.txt", "a") as f:
-            f.write(url + " " + e.__traceback__ + "\n")
-        print("Url failed: " + url)
-
-    # soup = BeautifulSoup(requests.get(url).text, "html.parser")
+    html = urlopen(url)
+    soup = BeautifulSoup(html, "html.parser")
+    return soup
 
 
 def start_scaping():
-    unfiltered_data = []
 
     for url in urls:
 
-        soup = get_soup(url)
-        if soup is None:
+        unfiltered_data = []
+
+        soup = ""
+
+        try:
+            soup = get_soup(url)
+            if soup is None:
+                continue
+        except Exception as e:
+            with open("failed.txt", "a") as f:
+                f.write(url)
+            print("Url failed: " + url)
             continue
 
         body = soup.body
 
         print("url " + url + " is being processed")
 
-        body = remove_garbage(body)
+        try:
+            body = remove_garbage(body)
+
+        except Exception as e:
+            with open("failed.txt", "a") as f:
+                f.write(url)
+            print("Url failed: " + url)
+            continue
 
         body.prettify()
 
-        [elem.string.replace_with(str(elem['href']).replace('mailto:', '')) if str(elem['href']).replace('mailto:',
-                                                                                                         '') != str(
-            elem.string) else '' for elem in body.select('a[href^="mailto"]')]
+        # print(body)
+
+        # [elem.string.replace_with(str(elem['href']).replace('mailto:', '')) if str(elem['href']).replace('mailto:',
+        #                                                                                                  '') != str(
+        #     elem.string) and elem.string else '' for elem in body.select('a[href^="mailto"]')]
+
+        # [elem.string.replace_with(str(elem['href']).replace('mailto:', '')) if elem.string else '' for elem in body.select('a[href^="mailto"]')]
+
+        for elem in body:
+            if elem.string:
+                elem.string.replace_with( str(elem.string).lstrip().rstrip() )
+
+        for elem in body.select('a[href^="mailto"]'):
+            # print(elem)
+            if elem.string:
+                elem.string.replace_with(str(elem['href']).replace('mailto:', ''))
+                # print(elem.string)
+            else:
+                for l in elem:
+                    if l.string and 'Email' in str(l.string):
+                        # print(l.string)
+                        l.replace_with(str(elem['href']).replace('mailto:', ''))
+
+
+
 
         for child in body.descendants:
-            if child.string is None or str(child.string).isspace() or len(str(child.string)) > 50 or len(
+            if child.string is None or str(child.string).isspace() or len(str(child.string).strip()) > 50 or len(
                     str(child.string).strip()) < 3 or in_filter(str(child.string)):
                 continue
 
-            unfiltered_data.append(child.string)
+            unfiltered_data.append(  re.sub('\s+', ' ', str(child.string).lstrip().rstrip()) )
+            # unfiltered_data.append(str(child.string).lstrip().rstrip() )
 
         data = list(OrderedDict.fromkeys(unfiltered_data))
         # for d in data:
         #     print(d)
-        create_people(data)
+        create_people(data, url)
 
 
 def main():
