@@ -6,6 +6,7 @@ golf services
 executive chef
 superintendent
 chef
+admin
 coach
 supervisor
 coordinator
@@ -28,3 +29,4 @@ professional
 accounts receivable
 payroll human resources
 accounts payable
+apprentice

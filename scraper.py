@@ -107,6 +107,12 @@ def create_people(data, url):
             elif ',' in data[n]:
                 words = data[n].split(',')
 
+            elif '-' in data[n]:
+                words = data[n].split('-')
+
+            elif '–' in data[n]:
+                words = data[n].split('–')
+
             if is_name(words[0]):
                 name = words[0]
                 position = words[1]
@@ -114,7 +120,7 @@ def create_people(data, url):
                 position = words[0]
                 name = words[1]
 
-        elif is_name(data[n]) or is_position(data[n]):
+        elif (is_name(data[n]) or is_position(data[n])) and not is_email(data[n]):
             if is_name(data[n]):
                 name = data[n]
 
@@ -166,6 +172,7 @@ def create_people(data, url):
             continue
 
         elif name and (position or phone or email) and name != prev.name:
+            # TODO check against prev Person - position, phone, name
             person = Person(name, position, phone, email, url)
             people.append(person)
             prev = person
@@ -198,10 +205,11 @@ def is_position(line):
     # line = line.lower().replace("/", " ").replace(':', ' ').replace(',', ' ')
     # line = re.sub('\s+', ' ', line)
     # print(line)
+
     line = line.lower()
     line = re.sub('[^a-zA-Z]', ' ', line)
 
-    no_space = re.sub("[^a-zA-Z]+", "", line)
+    no_space = re.sub("[^a-zA-Z]+", '', line)
     # return [position in line for position in positions_list]
     if no_space in positions_list:
         return True
@@ -210,7 +218,7 @@ def is_position(line):
     # print(positions_list)
     for n in range(len(words) - 1):
         adj = words[n] + ' ' + words[n+1]
-        if words[n] in positions_list or adj in positions_list:
+        if words[n] in positions_list or words[n+1] in positions_list or adj in positions_list:
             return True
 
     return False
@@ -228,6 +236,10 @@ def get_names():
     with open("names_dict.txt") as f:
         for line in f:
             name_list.add(line.strip('\n').lower())
+
+    # with open("last_names_dict.txt") as f:
+    #     for line in f:
+    #         name_list.add(line.strip('\n').lower())
 
 
 def get_positions():
