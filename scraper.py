@@ -18,6 +18,17 @@ stop_words.add('real estate')
 stop_words.add('bar')
 stop_words.add('of')
 
+output_file = "doc.csv"
+# url_file = "urls.txt"
+url_file = "test_urls.txt"
+failed_file = "failed.txt"
+names_file = "names_dict.txt"
+positions_file = "positions.txt"
+# positions_file = "positions_extended.txt"
+filter_file = "filter.txt"
+
+
+
 
 xlsx_file = "database.xlsx"
 
@@ -30,13 +41,13 @@ def write_xlsx():
     if people:
         person = people.pop(0)
         info = person.get_info()
-        with open("doc.csv", 'a') as f:
+        with open(output_file, 'a') as f:
             writer = csv.writer(f)
             writer.writerow(info)
 
 
 def get_urls():
-    with open("urls.txt") as f:
+    with open(url_file) as f:
         for line in f:
             urls.append(line)
 
@@ -62,7 +73,7 @@ def remove_garbage(body):
         while body.img:
             body.img.decompose()
     except Exception as e:
-        with open("failed.txt", "a") as f:
+        with open(failed_file, "a") as f:
             f.write(body)
         print("Url failed: " + body)
 
@@ -97,6 +108,9 @@ def create_people(data, url):
         position = ""
         phone = ""
         email = ""
+
+        if entry == prev.name or entry == prev.email or (not is_name(entry) and not is_position(entry) and not is_phone_number(entry) and not is_email(entry)):
+            continue
 
         if is_name(data[n]) and is_position(data[n]) and (',' in data[n] or ':' in data[n]):
             words = []
@@ -172,7 +186,7 @@ def create_people(data, url):
             continue
 
         elif name and (position or phone or email) and name != prev.name:
-            # TODO check against prev Person - position, phone, name
+            # TODO check against prev Person - phone, name
             person = Person(name, position, phone, email, url)
             people.append(person)
             prev = person
@@ -206,6 +220,9 @@ def is_position(line):
     # line = re.sub('\s+', ' ', line)
     # print(line)
 
+    if is_email(line):
+        return False
+
     line = line.lower()
     line = re.sub('[^a-zA-Z]', ' ', line)
 
@@ -233,9 +250,11 @@ def is_email(line):
 
 
 def get_names():
-    with open("names_dict.txt") as f:
+    with open(names_file) as f:
         for line in f:
             name_list.add(line.strip('\n').lower())
+
+    return name_list
 
     # with open("last_names_dict.txt") as f:
     #     for line in f:
@@ -243,13 +262,15 @@ def get_names():
 
 
 def get_positions():
-    with open("positions.txt") as f:
+    with open(positions_file) as f:
         for line in f:
             positions_list.add(line.strip('\n'))
 
+    return positions_list
+
 
 def get_filter():
-    with open("filter.txt") as f:
+    with open(filter_file) as f:
         for line in f:
             filtered.add(line.strip('\n'))
 
@@ -274,7 +295,7 @@ def start_scaping():
             if soup is None:
                 continue
         except Exception as e:
-            with open("failed.txt", "a") as f:
+            with open(failed_file, "a") as f:
                 f.write(url)
             print("Url failed: " + url)
             continue
@@ -287,7 +308,7 @@ def start_scaping():
             body = remove_garbage(body)
 
         except Exception as e:
-            with open("failed.txt", "a") as f:
+            with open(failed_file, "a") as f:
                 f.write(url)
             print("Url failed: " + url)
             continue
@@ -317,9 +338,6 @@ def start_scaping():
                         # print(l.string)
                         l.replace_with(str(elem['href']).replace('mailto:', ''))
 
-
-
-
         for child in body.descendants:
             if child.string is None or str(child.string).isspace() or len(str(child.string).strip()) > 50 or len(
                     str(child.string).strip()) < 3 or in_filter(str(child.string)):
@@ -331,7 +349,7 @@ def start_scaping():
         data = list(OrderedDict.fromkeys(unfiltered_data))
         # for d in data:
         #     print(d)
-        create_people(data, url)
+        create_people(data, url.strip('"'))
 
 
 def main():
@@ -345,4 +363,7 @@ def main():
     start_scaping()
 
 
-main()
+# main()
+
+if __name__ == "__main__":
+    main()
