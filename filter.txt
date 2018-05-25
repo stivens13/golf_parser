@@ -27,3 +27,6 @@ login
 username
 password
 submit
+copyright
+allrightsreserved
+poweredby
