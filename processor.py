@@ -20,7 +20,9 @@ positions_file = "positions.txt"
 # positions_file = "positions_extended.txt"
 filter_file = "filter.txt"
 
-phone_regex = ".*?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).*?"
+phone_regex1 = ".*?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).*?"
+phone_regex2 = '\D?(\d{0,3}?)\D{0,2}(\d{3})?\D{0,2}(\d{3})\D?(\d{4})$'
+phone_regex3 = '(?:\+?(\d{1})?-?\(?(\d{3})\)?[\s-\.]?)?(\d{3})[\s-\.]?(\d{4})[\s-\.]?'
 email_regex = "[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.[a-z]+"
 
 stop_words = set(stopwords.words('english'))
@@ -56,6 +58,8 @@ def strip_string(str):
 
 def process_page(body, url):
     unfiltered_data = []
+
+    # print('processing {}'.format(url))
 
     try:
         body = remove_garbage(body)
@@ -241,6 +245,7 @@ def create_people(data, url):
                     if n < 0:
                         n = 0
 
+                    name = parse_name(name)
                     email = parse_email(email)
                     person = Person(name, position, phone, email, url)
                     people.append(person)
@@ -303,13 +308,14 @@ def is_position(line):
 
 
 def is_phone_number(line):
-    is_phone = bool(re.search(phone_regex, line))
+    is_phone = bool(re.search(phone_regex1, line)) or bool(re.search(phone_regex2, line))
+    # is_phone = bool(re.search(phone_regex2, line))
     if is_phone:
         return True
     else:
         words = line.split(' ')
         for word in words:
-            if bool(re.search(phone_regex, word)):
+            if bool(re.search(phone_regex1, word)) or bool(re.search(phone_regex2, word)):
                 return True
 
     return False
@@ -318,6 +324,9 @@ def is_phone_number(line):
 def is_email(line):
     return bool(re.search(email_regex, line))
 
+
+def parse_name(line):
+    return re.sub("[^ a-zA-Z]+", "", strip_string(line))
 
 def parse_email(line):
     words = line.split(' ')
@@ -347,7 +356,7 @@ def get_positions():
 
 
 def get_phones_emails(body):
-    unfiltered_phones = body.find_all(string=re.compile(phone_regex))
+    unfiltered_phones = body.find_all(string=re.compile(phone_regex2))
     unfiltered_emails = body.find_all(string=re.compile(email_regex))
 
     phones = list(OrderedDict.fromkeys(unfiltered_phones))

@@ -1,45 +1,48 @@
 import gevent.monkey; gevent.monkey.patch_all()
 from urllib.request import urlopen
-from bs4 import BeautifulSoup
 
 failed = []
-pages = []
-urls = []
-
-grabber_not_done = True
-
-url_file = "urls.txt"
-
-def get_urls():
-    with open(url_file) as f:
-        for line in f:
-            urls.append(line)
-
-    # return urls
 
 
-def print_head(url):
-    print('Starting {}'.format(url))
-    try:
-        data = urlopen(url)
-        # print(data.geturl())
-        pages.append(data)
-        # soup = BeautifulSoup(data, 'html.parser')
-        # print('{}: {} bytes: {}'.format(url, len(data.read()), soup.title))
-        # print(url)
-    except Exception as e:
-        print(e, " ", url)
-        failed.append(url)
+class Grabber:
 
+    pages = []
 
-def worker(_urls):
-    jobs = [gevent.spawn(print_head, _url) for _url in _urls]
+    pages_grabbed = 0
 
-    gevent.joinall(jobs, timeout=20)
+    grabber_not_done = True
 
-def start_grabbing():
-    get_urls()
-    worker(urls)
-    print('Grabber is done')
-    grabber_not_done = False
-    return pages
+    def __init__(self):
+        self.pages_grabbed = 0
+
+    def get_pages(self):
+        return self.pages
+
+    def get_page(self):
+        return self.pages.pop(0)
+
+    def print_head(self, url):
+
+        try:
+
+            data = urlopen(url)
+
+            if data.getcode() == 200:
+                self.pages.append(data)
+
+            self.pages_grabbed += 1
+
+        except Exception as e:
+            # print(e, " ", url)
+            failed.append(url)
+
+    def print_urls_grabbed(self):
+        print('Grabber grabbed {} pages'.format(self.pages_grabbed))
+
+    def worker(self, urls):
+        print('Grabber is started')
+        grabber_jobs = [gevent.spawn(self.print_head, _url) for _url in urls]
+        return grabber_jobs
+
+    def more_pages(self):
+        return len(self.pages) > 0

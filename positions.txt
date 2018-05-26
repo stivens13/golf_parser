@@ -16,6 +16,7 @@ payroll
 human resources
 accounts payable
 receptionist
+instructor
 superintendant
 officer
 sergeant

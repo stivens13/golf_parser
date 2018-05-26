@@ -48,20 +48,15 @@ class TestIs_name(TestCase):
         self.assertEqual(processor.is_phone_number('(704) 896-7676'), True)
         self.assertEqual(processor.is_phone_number('(770)-497-0055'), True)
         self.assertEqual(processor.is_phone_number('732-291-0533 x22'), True)
-        self.assertEqual(processor.is_phone_number(''), True)
-        self.assertEqual(processor.is_phone_number(''), True)
-        self.assertEqual(processor.is_phone_number(''), True)
-        self.assertEqual(processor.is_phone_number(''), True)
-        self.assertEqual(processor.is_phone_number(''), True)
-        self.assertEqual(processor.is_phone_number(''), True)
-        self.assertEqual(processor.is_phone_number(''), True)
-        self.assertEqual(processor.is_phone_number(''), True)
-        self.assertEqual(processor.is_phone_number(''), True)
-        self.assertEqual(processor.is_phone_number(''), True)
-        self.assertEqual(processor.is_phone_number(''), True)
-        self.assertEqual(processor.is_phone_number(''), True)
-        self.assertEqual(processor.is_phone_number(''), True)
-        self.assertEqual(processor.is_phone_number(''), True)
-        self.assertEqual(processor.is_phone_number(''), True)
-        self.assertEqual(processor.is_phone_number(''), True)
-        self.assertEqual(processor.is_phone_number(''), True)
+
+
+        # self.assertEqual(processor.is_phone_number(''), True)
+        # self.assertEqual(processor.is_phone_number(''), True)
+
+    def test_is_phone2(self):
+        self.assertEqual(processor.is_phone_number('Ph. 914-941-8070, ext. 415'), True)
+        self.assertEqual(processor.is_phone_number('Ph. 914-941-3062'), True)
+        self.assertEqual(processor.is_phone_number('Ph. 914-941-8070, ext. 422'), True)
+
+    def test_is_phone3(self):
+        self.assertEqual(processor.is_phone_number('Contact Carl at 536-4465 or cgranberg@rgcc.org'), True)

@@ -1196,7 +1196,6 @@ lorie
 leanne
 lara
 ladonna
-junior
 jeannine
 ivy
 grover
@@ -3584,6 +3583,7 @@ kymberly
 kym
 krysta
 kristel
+kris
 kourtney
 kindra
 kimiko
