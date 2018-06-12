@@ -175,7 +175,7 @@ def create_people(data, url):
                 misery_count += 1
 
                 if entry == prev.name or entry == prev.email or (not is_name(entry) and not is_position(entry) and not is_phone_number(entry) and not is_email(entry)):
-                    # data = data[n:]
+                    data = data[n:]
                     continue
 
                 if is_name(data[n]) and is_position(data[n]): # and (',' in data[n] or ':' in data[n]):
