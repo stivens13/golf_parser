@@ -32,6 +32,16 @@ class TestIs_name(TestCase):
     def test_not_position(self):
         self.assertEqual(processor.is_position("chef@bhamcc.com"), False)
 
+    def test_not_position1(self):
+            self.assertEqual(processor.is_position("chef@bhamcc.com"), False)
+
+    def test_not_position2(self):
+            self.assertEqual(processor.is_position("chef@bhamcc.com"), False)
+
+    def test_not_position3(self):
+            self.assertEqual(processor.is_position("chef@bhamcc.com"), False)
+
+
     def test_is_phone(self):
         # self.assertEqual(processor.is_phone_number('Contact Carl at 536-4465 or cgranberg@rgcc.org'), True)
         self.assertEqual(processor.is_phone_number('Contact David at dpetric@rgcc.org or at 507-316-4896'), True)
@@ -60,3 +70,13 @@ class TestIs_name(TestCase):
 
     def test_is_phone3(self):
         self.assertEqual(processor.is_phone_number('Contact Carl at 536-4465 or cgranberg@rgcc.org'), True)
+
+    def test_is_position(self):
+        self.assertEqual(processor.is_position('VP of Membership Sales'), True)
+        self.assertEqual(processor.is_position('Food & Beverage Manager'), True)
+        self.assertEqual(processor.is_position('Food & Beverage Manager'), True)
+
+    def test_is_position1(self):
+        self.assertEqual(processor.is_position('Events Coordinator'), True)
+        self.assertEqual(processor.is_position('General Manager / COO'), True)
+        self.assertEqual(processor.is_position('Head Golf Professional'), True)

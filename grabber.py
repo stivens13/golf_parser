@@ -28,6 +28,7 @@ class Grabber:
             data = urlopen(url)
 
             if data.getcode() == 200:
+                # self.pages.put(data) # for multiprocessing
                 self.pages.append(data)
 
             self.pages_grabbed += 1
@@ -39,8 +40,11 @@ class Grabber:
     def print_urls_grabbed(self):
         print('Grabber grabbed {} pages'.format(self.pages_grabbed))
 
-    def worker(self, urls):
+    def worker(self, urls): #, pages):
         print('Grabber is started')
+
+        # self.pages = pages # for multiprocessing
+
         grabber_jobs = [gevent.spawn(self.print_head, _url) for _url in urls]
         return grabber_jobs
 

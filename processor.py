@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup, Comment
 from Person import Person
-import scraper
+# import scraper
 import re
 from collections import OrderedDict
 from nltk.corpus import stopwords
@@ -9,16 +9,18 @@ import csv
 # people = scraper.people
 people = []
 
-name_list = set()
-positions_list = set()
+names_set = set()
+last_names_set = set()
+positions_set = set()
 filtered = set()
 
-output_file = "doc.csv"
-failed_file = "failed.txt"
-names_file = "names_dict.txt"
-positions_file = "positions.txt"
-# positions_file = "positions_extended.txt"
-filter_file = "filter.txt"
+output_file = 'doc.csv'
+failed_file = 'failed.txt'
+names_file = 'names_dict.txt'
+last_names_file = 'last_names_dict.txt'
+# positions_file = "positions.txt"
+positions_file = 'positions_extended.txt'
+filter_file = 'filter.txt'
 
 phone_regex1 = ".*?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).*?"
 phone_regex2 = '\D?(\d{0,3}?)\D{0,2}(\d{3})?\D{0,2}(\d{3})\D?(\d{4})$'
@@ -26,10 +28,10 @@ phone_regex3 = '(?:\+?(\d{1})?-?\(?(\d{3})\)?[\s-\.]?)?(\d{3})[\s-\.]?(\d{4})[\s
 email_regex = "[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.[a-z]+"
 
 stop_words = set(stopwords.words('english'))
-stop_words.add('ext')
-stop_words.add('real estate')
-stop_words.add('bar')
-stop_words.add('of')
+# stop_words.add('ext')
+# stop_words.add('real estate')
+# stop_words.add('bar')
+# stop_words.add('of')
 
 
 def write_to_file():
@@ -56,10 +58,12 @@ def strip_string(str):
     return str.lstrip().rstrip()
 
 
-def process_page(body, url):
+def process_page(soup, url):
     unfiltered_data = []
 
     # print('processing {}'.format(url))
+
+    body = soup.body
 
     try:
         body = remove_garbage(body)
@@ -77,24 +81,43 @@ def process_page(body, url):
             elem.string.replace_with(str(elem.string).lstrip().rstrip())
 
     for elem in body.select('a[href^="mailto"]'):
-        if elem.string:
+        # print(elem.string)
+        if elem.string and ('Email' in str(elem.string) or not is_email(elem.string)):
+            # print(elem.string)
             elem.string.replace_with(str(elem['href']).replace('mailto:', ''))
         else:
             for l in elem:
-                if l.string and 'Email' in str(l.string):
+                if l.string and ('Email' in str(l.string) or not is_email(l.string)):
                     # print(l.string)
                     l.replace_with(str(elem['href']).replace('mailto:', ''))
 
     for child in body.descendants:
-        if child.string is None or str(child.string).isspace() or len(str(child.string).strip()) > 50 or len(
-                str(child.string).strip()) < 3 or in_filter(str(child.string)):
+        if child.string is None or str(child.string).isspace() or len(str(child.string).strip()) > 60 or len(
+                str(child.string).strip()) < 3 or in_filter(str(child.string)) or str(child.string) == unfiltered_data[-1:]:
             continue
 
         unfiltered_data.append(re.sub('\s+', ' ', str(child.string).lstrip().rstrip()))
 
-    data = list(OrderedDict.fromkeys(unfiltered_data))
+    if len(unfiltered_data) > 10:
+        data = filter_data(unfiltered_data)
+        # data = list(OrderedDict.fromkeys(unfiltered_data))
 
-    create_people(data, url.strip('"'))
+        create_people(data, url.strip('"'))
+        # create_people(data, url.strip('"'))
+
+
+def filter_data(data):
+
+    new_data = []
+    new_data.append(data[1])
+
+    for k in range(len(data)):
+        if data[k] == new_data[len(new_data) - 1]:
+            continue
+        else:
+            new_data.append(data[k])
+
+    return new_data
 
 
 def remove_garbage(body):
@@ -127,13 +150,15 @@ def remove_garbage(body):
 
 def create_people(data, url):
 
+    # print('processing {}'.format(url))
+
     prev = Person("dummy", "dummy", "dummy", "dummy", "dummy")
 
     misery_count = 0
 
     while(data):
 
-        if misery_count > 100:
+        if misery_count > 300:
             break
 
         try:
@@ -147,39 +172,62 @@ def create_people(data, url):
                 position = ""
                 phone = ""
                 email = ""
+                misery_count += 1
 
                 if entry == prev.name or entry == prev.email or (not is_name(entry) and not is_position(entry) and not is_phone_number(entry) and not is_email(entry)):
-                    misery_count += 1
+                    # data = data[n:]
                     continue
 
-                if is_name(data[n]) and is_position(data[n]) and (',' in data[n] or ':' in data[n]):
+                if is_name(data[n]) and is_position(data[n]): # and (',' in data[n] or ':' in data[n]):
                     words = []
 
-                    if ':' in data[n]:
-                        words = data[n].split(':')
+                    delims = [':', ',', '-', '–']
 
-                    elif ',' in data[n]:
-                        words = data[n].split(',')
+                    for delim in delims:
+                        if delim in data[n]:
+                            words = data[n].split(delim)
 
-                    elif '-' in data[n]:
-                        words = data[n].split('-')
+                            if is_name(words[0]):
+                                name = words[0]
+                                position = words[1]
+                                break
+                            else:
+                                position = words[0]
+                                name = words[1]
+                                break
 
-                    elif '–' in data[n]:
-                        words = data[n].split('–')
+                    if name == '' or None:
+                        # print('else')
+                        words = data[n].split()
+                        if is_name(words[0]):
+                            name = words[0] + ' ' + words[1]
+                            if is_position(' '.join(words[2:])):
+                                position = ' '.join(words[2:])
 
-                    if is_name(words[0]):
-                        name = words[0]
-                        position = words[1]
-                    else:
-                        position = words[0]
-                        name = words[1]
+                    # if ':' in data[n]:
+                    #     words = data[n].split(':')
+                    #
+                    # elif ',' in data[n]:
+                    #     words = data[n].split(',')
+                    #
+                    # elif '-' in data[n]:
+                    #     words = data[n].split('-')
+                    #
+                    # elif '–' in data[n]:
+                    #     words = data[n].split('–')
+
+
+
+                    if is_position(data[n + 1]):
+                        position = position + ', ' + data[n + 1]
+                        n += 1
 
                 elif (is_name(data[n]) or is_position(data[n])) and not is_email(data[n]):
                     if is_name(data[n]):
                         name = data[n]
 
-                        if is_position(data[n-1]) and n > 0:
-                            position = data[n-1]
+                        if is_position(data[n - 1]) and n > 0:
+                            position = data[n - 1]
                             n += 1
 
                         elif is_position(data[n+1]):
@@ -247,11 +295,12 @@ def create_people(data, url):
 
                     name = parse_name(name)
                     email = parse_email(email)
+                    phone = parse_phone(phone)
                     person = Person(name, position, phone, email, url)
                     people.append(person)
                     prev = person
                     write_to_file()
-                    data = data[n + 1:len(data)]
+                    data = data[n + 1:]
                     misery_count = 0
                     break
 
@@ -273,8 +322,11 @@ def is_name(line):
     line = line.lower().strip(':').strip('/')
     words = line.split(' ')
 
+    # if words[1] in last_names_set:
+    #     return True
+
     for word in words:
-        if word in name_list and word not in stop_words:
+        if word in names_set and word not in stop_words:
             return True
 
     return False
@@ -290,18 +342,19 @@ def is_position(line):
         return False
 
     line = line.lower()
-    line = re.sub('[^a-zA-Z]', ' ', line)
+    new_line = re.sub('[^a-zA-Z]', ' ', line)
 
-    no_space = re.sub("[^a-zA-Z]+", '', line)
-    # return [position in line for position in positions_list]
-    if no_space in positions_list:
+    no_space = re.sub("[^a-zA-Z]+", '', new_line)
+    # return [position in new_line for position in positions_list]
+    if no_space in positions_set:# or line.strip() in positions_list:
         return True
 
-    words = line.split(' ')
+    words = new_line.split(' ')
+
     # print(positions_list)
     for n in range(len(words) - 1):
         adj = words[n] + ' ' + words[n+1]
-        if words[n] in positions_list or words[n+1] in positions_list or adj in positions_list:
+        if words[n] in positions_set or words[n + 1] in positions_set or adj in positions_set:
             return True
 
     return False
@@ -334,25 +387,34 @@ def parse_email(line):
         if is_email(word):
             return word
 
+def parse_phone(str):
+    filts = ['|', 'Phone', 'Cell:', '.']
+    for filt in filts:
+        str = str.strip(filt)
+    return str
+
+    # return str.strip('|').strip('Phone')
+
 
 def get_names():
     with open(names_file) as f:
         for line in f:
-            name_list.add(line.strip('\n').lower())
+            names_set.add(line.strip('\n').lower())
 
-    return name_list
+    # return name_list
 
     # with open("last_names_dict.txt") as f:
     #     for line in f:
-    #         name_list.add(line.strip('\n').lower())
+    #         names_set.add(line.strip('\n').lower())
+    #         # last_names_set.add(line.strip('\n').lower())
 
 
 def get_positions():
     with open(positions_file) as f:
         for line in f:
-            positions_list.add(line.strip('\n'))
+            positions_set.add(line.strip('\n'))
 
-    return positions_list
+    return positions_set
 
 
 def get_phones_emails(body):

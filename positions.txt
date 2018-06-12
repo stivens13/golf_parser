@@ -31,3 +31,6 @@ accounts receivable
 payroll human resources
 accounts payable
 apprentice
+golf
+socialdining
+employmentopportunities

@@ -14,4 +14,4 @@ class Person:
         self.url = url
 
     def get_info(self):
-        return [self.name, self.position, self.phone, self.email, self.url, self.extra]
+        return [self.name, self.position, self.phone, self.email, self.url]
