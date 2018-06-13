@@ -57,12 +57,12 @@ def strip_string(str):
     return str.lstrip().rstrip()
 
 
-def process_page(soup, url):
+def process_page(body, url):
     unfiltered_data = []
 
     # print('processing {}'.format(url))
 
-    body = soup.body
+    # body = soup.body
 
     try:
         body = remove_garbage(body)
@@ -411,7 +411,7 @@ def is_position(line):
         # if adj in positions_set:
             matches += 1
             # return True
-        if matches > 2:
+        if matches > 3:
             return True
 
     return False

@@ -2,7 +2,7 @@
 from grabber import Grabber
 import gevent.monkey;
 import processor
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, SoupStrainer
 from urllib.request import urlopen
 import time
 import progressbar
@@ -45,9 +45,9 @@ class Scraper:
         self.main()
 
     def create_output_file(self):
-        print(str(datetime.datetime.now()))
-        cur_time = str(datetime.datetime.now())
-        output_file = 'doc' + cur_time + '.csv'
+        # print(str(datetime.datetime.now()))
+        cur_time = str(datetime.datetime.now())[:-7]
+        output_file = 'doc ' + cur_time + '.csv'
         processor.output_file = output_file
         with open(output_file, 'w') as f:
             writer = csv.writer(f)
@@ -69,9 +69,10 @@ class Scraper:
     def soupify(self, page):
         try:
             url = page.geturl()
+            strain = SoupStrainer('body')
 
             # self.bodies_mult.put([BeautifulSoup(page, 'html.parser').body, url])
-            self.bodies.append([BeautifulSoup(page, 'lxml'), url])
+            self.bodies.append([BeautifulSoup(page, 'lxml', parse_only=strain), url])
             # self.bodies.append([BeautifulSoup(page, 'html.parser'), url])
 
         except Exception as e:
