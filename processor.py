@@ -13,6 +13,7 @@ names_set = set()
 last_names_set = set()
 positions_set = set()
 filtered = set()
+info_emails = set()
 
 output_file = 'doc.csv'
 failed_file = 'failed.txt'
@@ -106,6 +107,13 @@ def process_page(soup, url):
         # create_people(data, url.strip('"'))
 
 
+def is_data(entry):
+    if is_name(entry) or is_position(entry) or is_phone_number(entry) or is_email(entry):
+        return True
+
+    return False
+
+
 def filter_data(data):
 
     new_data = []
@@ -114,7 +122,7 @@ def filter_data(data):
     for k in range(len(data)):
         if data[k] == new_data[len(new_data) - 1]:
             continue
-        else:
+        elif is_data(data[k]):
             new_data.append(data[k])
 
     return new_data
@@ -168,59 +176,24 @@ def create_people(data, url):
                 data[n] = data[n].lstrip().rstrip()
                 entry = data[n]
 
-                name = ""
-                position = ""
-                phone = ""
-                email = ""
+                name = ''
+                club_name = ''
+                position = ''
+                phone = ''
+                email = ''
+                info_email = ''
                 misery_count += 1
 
                 if entry == prev.name or entry == prev.email or (not is_name(entry) and not is_position(entry) and not is_phone_number(entry) and not is_email(entry)):
                     data = data[n:]
                     continue
 
-                if is_name(data[n]) and is_position(data[n]): # and (',' in data[n] or ':' in data[n]):
-                    words = []
+                if is_club_name(data[n]):
+                    club_name = data[n]
 
-                    delims = [':', ',', '-', '–']
+                if is_name(data[n]) and is_position(data[n]):
 
-                    for delim in delims:
-                        if delim in data[n]:
-                            words = data[n].split(delim)
-
-                            if is_name(words[0]):
-                                name = words[0]
-                                position = words[1]
-                                break
-                            else:
-                                position = words[0]
-                                name = words[1]
-                                break
-
-                    if name == '' or None:
-                        # print('else')
-                        words = data[n].split()
-                        if is_name(words[0]):
-                            name = words[0] + ' ' + words[1]
-                            if is_position(' '.join(words[2:])):
-                                position = ' '.join(words[2:])
-
-                    # if ':' in data[n]:
-                    #     words = data[n].split(':')
-                    #
-                    # elif ',' in data[n]:
-                    #     words = data[n].split(',')
-                    #
-                    # elif '-' in data[n]:
-                    #     words = data[n].split('-')
-                    #
-                    # elif '–' in data[n]:
-                    #     words = data[n].split('–')
-
-
-
-                    if is_position(data[n + 1]):
-                        position = position + ', ' + data[n + 1]
-                        n += 1
+                    name, position = get_name_and_position(data, n)
 
                 elif (is_name(data[n]) or is_position(data[n])) and not is_email(data[n]):
                     if is_name(data[n]):
@@ -238,15 +211,27 @@ def create_people(data, url):
                         position = data[n]
 
                         if is_name(data[n - 1]) and n > 0:
-                            name = data[n - 1]
-                            n += 1
+                            if is_name(data[n - 1]) and is_position(data[n - 1]):
+                                name, position = get_name_and_position(data, n - 1)
+                            else:
+                                name = data[n - 1]
+                                n += 1
 
                         elif is_name(data[n + 1]):
-                            name = data[n + 1]
-                            n += 2
+                            if is_name(data[n + 1]) and is_position(data[n + 1]):
+                                name, position = get_name_and_position(data, n + 1)
+                            else:
+                                name = data[n + 1]
+                                n += 2
+
+                if is_info_email(data[n]):
+                    info_email = data[n]
 
                 if not is_phone_number(data[n]) and not is_email(data[n]):
                     n += 1
+
+                if is_info_email(data[n]):
+                    info_email = data[n]
 
                 if not is_phone_number(data[n]) and not is_email(data[n]):
                     if n > 1:
@@ -254,42 +239,51 @@ def create_people(data, url):
                     else:
                         n += 1
 
-                if is_phone_number(data[n]) and is_email(data[n]):
-                    words = data[n].split(' ')
-                    for word in words:
-                        if is_phone_number(word):
-                            phone = word
+                try:
 
-                        elif is_email(word):
-                            email = word
+                    if is_info_email(data[n]):
+                        info_email = data[n]
 
-                elif is_phone_number(data[n]) or is_email(data[n]):
-                    if is_phone_number(data[n]):
-                        phone = data[n]
+                    if is_phone_number(data[n]) and is_email(data[n]):
+                        words = data[n].split(' ')
+                        for word in words:
+                            if is_phone_number(word):
+                                phone = word
 
-                        if is_email(data[n - 1]) and n > 0:
-                            email = data[n - 1]
-                            n -= 1
+                            elif is_email(word):
+                                email = word
 
-                        elif is_email(data[n + 1]):
-                            email = data[n + 1]
-                            n += 1
+                    elif is_phone_number(data[n]) or is_email(data[n]):
+                        if is_phone_number(data[n]):
+                            phone = data[n]
 
-                    elif is_email(data[n]):
-                        email = data[n]
+                            if is_email(data[n - 1]) and n > 0:
+                                email = data[n - 1]
+                                n -= 1
 
-                        if is_phone_number(data[n - 1]) and n > 0:
-                            phone = data[n - 1]
-                            n -= 1
+                            elif is_email(data[n + 1]):
+                                email = data[n + 1]
+                                n += 1
 
-                        elif is_phone_number(data[n + 1]):
-                            phone = data[n + 1]
-                            n += 1
+                        elif is_email(data[n]):
+                            email = data[n]
+
+                            if is_phone_number(data[n - 1]) and n > 0:
+                                phone = data[n - 1]
+                                n -= 1
+
+                            elif is_phone_number(data[n + 1]):
+                                phone = data[n + 1]
+                                n += 1
+
+                except Exception as e:
+                    pass
+                    # print(e, 'from inside')
 
                 if not name and not position and not phone and not email:
                     continue
 
-                elif name and (position or phone or email) and name != prev.name:
+                elif name and (position or phone or email) and name != prev.name and 'club' not in name:
                     if n < 0:
                         n = 0
 
@@ -304,8 +298,52 @@ def create_people(data, url):
                     misery_count = 0
                     break
 
+                if info_email and (phone or club_name) and info_email not in info_emails:
+                    info_emails.add(info_email)
+                    # print('Info person created')
+                    phone = parse_phone(phone)
+                    info_email = parse_email(info_email)
+                    info_person = Person(club_name, position, phone, info_email, url)
+                    people.append(info_person)
+                    write_to_file()
+
         except Exception as e:
+            # print(e)
             break
+
+
+def get_name_and_position(data, n):
+    delims = [':', ',', '-', '–']
+
+    name = ''
+    position = ''
+
+    for delim in delims:
+        if delim in data[n]:
+            words = data[n].split(delim)
+
+            if is_name(words[0]):
+                name = words[0]
+                position = words[1]
+                break
+            else:
+                position = words[0]
+                name = words[1]
+                break
+
+    if name == '' or None:
+        # print('else')
+        words = data[n].split()
+        if is_name(words[0]):
+            name = words[0] + ' ' + words[1]
+            if is_position(' '.join(words[2:])):
+                position = ' '.join(words[2:])
+
+    if is_position(data[n + 1]):
+        position = position + ', ' + data[n + 1]
+        n += 1
+
+    return name, position
 
 
 def in_filter(line):
@@ -322,11 +360,16 @@ def is_name(line):
     line = line.lower().strip(':').strip('/')
     words = line.split(' ')
 
-    # if words[1] in last_names_set:
-    #     return True
-
     for word in words:
-        if word in names_set and word not in stop_words:
+        if (word in names_set or word in last_names_set) and word not in stop_words:
+            return True
+
+    return False
+
+def is_club_name(line):
+    words = ['Club', 'Country', 'Road', 'River', 'Bridge', 'Hills']
+    for word in words:
+        if word in line:
             return True
 
     return False
@@ -378,14 +421,26 @@ def is_email(line):
     return bool(re.search(email_regex, line))
 
 
+def is_info_email(line):
+    words = ['receptionesk', 'info', 'golfshop', 'proshop', 'shop']
+    if is_email(line):
+        for word in words:
+            if word in line:
+                return True
+
+    return False
+
+
 def parse_name(line):
     return re.sub("[^ a-zA-Z]+", "", strip_string(line))
+
 
 def parse_email(line):
     words = line.split(' ')
     for word in words:
         if is_email(word):
             return word
+
 
 def parse_phone(str):
     filts = ['|', 'Phone', 'Cell:', '.']
@@ -401,12 +456,10 @@ def get_names():
         for line in f:
             names_set.add(line.strip('\n').lower())
 
-    # return name_list
-
-    # with open("last_names_dict.txt") as f:
-    #     for line in f:
-    #         names_set.add(line.strip('\n').lower())
-    #         # last_names_set.add(line.strip('\n').lower())
+    with open("last_names_dict.txt") as f:
+        for line in f:
+            # names_set.add(line.strip('\n').lower())
+            last_names_set.add(line.strip('\n').lower())
 
 
 def get_positions():

@@ -17,8 +17,8 @@ bar3 = progressbar.ProgressBar(max_value=progressbar.UnknownLength)
 
 
 output_file = "doc.csv"
-# url_file = 'urls.txt'
-url_file = "test_urls.txt"
+url_file = 'urls.txt'
+# url_file = "test_urls.txt"
 failed_file = "failed.txt"
 
 
@@ -179,8 +179,8 @@ class Scraper:
         processor.get_filter()
         self.get_urls()
 
-        self.sync_starter()
-        # self.async_starter()
+        # self.sync_starter()
+        self.async_starter()
 
         final = round(time.time() - t)
 

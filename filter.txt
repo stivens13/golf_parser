@@ -47,3 +47,9 @@ youth
 golf
 employmentopportunities
 juniorsports
+forgotpassword
+tourofthecourse
+guestinformation
+contactinformation
+welcome
+wedding

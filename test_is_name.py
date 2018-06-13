@@ -26,6 +26,24 @@ class TestIs_name(TestCase):
         self.assertEqual(processor.is_name("Barbara"), True)
         self.assertEqual(processor.is_name("Barbara"), True)
 
+    def test_is_not_name2(self):
+        self.assertEqual(processor.is_name('HTML PUBLIC WCDTD HTML E N'), False)
+        self.assertEqual(processor.is_name('ADULTS ONLY GUESTS WELCOME'), False)
+        self.assertEqual(processor.is_name('n per child p lus tax'), False)
+        self.assertEqual(processor.is_name('nKids Zone opens at pm'), False)
+        self.assertEqual(processor.is_name('Sunday July '), False)
+        self.assertEqual(processor.is_name('am  Swim Meet '), False)
+        self.assertEqual(processor.is_name('will decorate and create posters and get excit ed for the'), False)
+        self.assertEqual(processor.is_name('nTHURSDAY JULY '), False)
+        self.assertEqual(processor.is_name('This carni val is for kids ages    and'), False)
+        self.assertEqual(processor.is_name('special smores and rice krispie bar'), False)
+        self.assertEqual(processor.is_name('provide d by the campfire at night and a delicious'), False)
+        # self.assertEqual(processor.is_name('of September i n the US'), False)
+        self.assertEqual(processor.is_name('Baked cod with lemon dill sauce'), False)
+        self.assertEqual(processor.is_name('per person plus tax'), False)
+        self.assertEqual(processor.is_name('Carving Station'), False)
+        self.assertEqual(processor.is_name('HTML PUBLIC WCDTD HTML E N'), False)
+
     def test_not_name(self):
         self.assertEqual(processor.is_name("Assistant Green Superintendent"), False)
 
@@ -80,3 +98,4 @@ class TestIs_name(TestCase):
         self.assertEqual(processor.is_position('Events Coordinator'), True)
         self.assertEqual(processor.is_position('General Manager / COO'), True)
         self.assertEqual(processor.is_position('Head Golf Professional'), True)
+
