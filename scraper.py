@@ -8,6 +8,7 @@ import time
 import progressbar
 import multiprocessing
 import csv
+import datetime
 
 grab = Grabber()
 
@@ -17,8 +18,6 @@ bar3 = progressbar.ProgressBar(max_value=progressbar.UnknownLength)
 
 
 output_file = "doc.csv"
-# url_file = 'urls.txt'
-url_file = "test_urls.txt"
 failed_file = "failed.txt"
 
 
@@ -33,6 +32,9 @@ class Scraper:
     urls = []
     bodies = []
 
+    url_file = 'urls.txt'
+    url_test_file = "test_urls.txt"
+
     # pages_mult = multiprocessing.Queue()
     # bodies_mult = multiprocessing.Queue()
     # pages_mult = multiprocessing.Queue()
@@ -43,12 +45,16 @@ class Scraper:
         self.main()
 
     def create_output_file(self):
+        print(str(datetime.datetime.now()))
+        cur_time = str(datetime.datetime.now())
+        output_file = 'doc' + cur_time + '.csv'
+        processor.output_file = output_file
         with open(output_file, 'w') as f:
             writer = csv.writer(f)
             writer.writerow(['Name', 'Position', 'Phone', 'Email', 'Website'])
 
     def get_urls(self):
-        with open(url_file) as f:
+        with open(self.url_file) as f:
             for line in f:
                 self.urls.append(line)
 
@@ -146,10 +152,15 @@ class Scraper:
 
     def async_starter(self):
 
+        self.get_urls()
+
         procs = [gevent.spawn(self.init_grabbing), gevent.spawn_later(3, self.init_souping), gevent.spawn_later(3, self.init_processing)]
         gevent.joinall(procs)
 
     def sync_starter(self):
+
+        self.url_file = self.url_test_file
+        self.get_urls()
 
         for url in self.urls:
 
@@ -177,10 +188,10 @@ class Scraper:
         processor.get_names()
         processor.get_positions()
         processor.get_filter()
-        self.get_urls()
+        # self.get_urls()
 
-        self.sync_starter()
-        # self.async_starter()
+        # self.sync_starter()
+        self.async_starter()
 
         final = round(time.time() - t)
 

@@ -375,7 +375,7 @@ def is_name(line):
 
 def is_club_name(line):
     line = line.lower()
-    words = ['club', 'country', 'road', 'river', 'bridge', 'hills', 'concierge', 'reception', 'desk']
+    words = ['club', 'country', 'road', 'river', 'bridge', 'hills', 'concierge', 'reception', 'desk', 'field', 'house']
     for word in words:
         if word in line:
             return True
@@ -403,16 +403,15 @@ def is_position(line):
     if no_space in positions_set or set(words).intersection(positions_small_set):
         return True
 
-    # for word in words:
-    #     if
-
     matches = 0
 
     for n in range(len(words) - 1):
         adj = words[n] + ' ' + words[n+1]
         if words[n] in positions_set or words[n + 1] in positions_set or adj in positions_set:
+        # if adj in positions_set:
             matches += 1
-        if matches > 1:
+            # return True
+        if matches > 2:
             return True
 
     return False
