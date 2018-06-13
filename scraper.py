@@ -189,7 +189,6 @@ class Scraper:
         processor.get_names()
         processor.get_positions()
         processor.get_filter()
-        # self.get_urls()
 
         # self.sync_starter()
         self.async_starter()

@@ -135,17 +135,16 @@ def remove_garbage(body):
         if body.header:
             body.header.decompose()
 
-        comments = body.findAll(text=lambda text: isinstance(text, Comment))
-        [comment.extract() for comment in comments]
+        [comment.extract() for comment in body.findAll(text=lambda text: isinstance(text, Comment))]
 
-        while body.script:
-            body.script.decompose()
-        while body.style:
-            body.style.decompose()
-        while body.link:
-            body.link.decompose()
-        while body.img:
-            body.img.decompose()
+        [x.decompose() for x in body.findAll('script')]
+
+        [x.decompose() for x in body.findAll('style')]
+
+        [x.decompose() for x in body.findAll('link')]
+
+        [x.decompose() for x in body.findAll('img')]
+
     except Exception as e:
         with open(failed_file, "a") as f:
             f.write(body)
