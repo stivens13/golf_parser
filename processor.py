@@ -6,6 +6,8 @@ from collections import OrderedDict
 from nltk.corpus import stopwords
 import csv
 
+import time
+
 # people = scraper.people
 people = []
 
@@ -64,6 +66,8 @@ def process_page(body, url):
 
     # body = soup.body
 
+    t = time.time()
+
     try:
         body = remove_garbage(body)
 
@@ -73,11 +77,18 @@ def process_page(body, url):
         print("Url failed: " + url)
         return
 
+    garbage = time.time() - t
+
     body.prettify()
+
+    t1 = time.time()
 
     for elem in body:
         if elem.string:
             elem.string.replace_with(str(elem.string).lstrip().rstrip())
+
+    first_replacement = time.time() - t1
+    t1 = time.time()
 
     for elem in body.select('a[href^="mailto"]'):
         # print(elem.string)
@@ -90,6 +101,9 @@ def process_page(body, url):
                     # print(l.string)
                     l.replace_with(str(elem['href']).replace('mailto:', ''))
 
+    email_proc = time.time() - t1
+    t1 = time.time()
+
     for child in body.descendants:
         if child.string is None or str(child.string).isspace() or len(str(child.string).strip()) > 60 or len(
                 str(child.string).strip()) < 3 or in_filter(str(child.string)) or str(child.string) == unfiltered_data[-1:]:
@@ -97,12 +111,24 @@ def process_page(body, url):
 
         unfiltered_data.append(re.sub('\s+', ' ', str(child.string).lstrip().rstrip()))
 
+    data_collection = time.time() - t1
+    t1 = time.time()
+
     if len(unfiltered_data) > 10:
         data = filter_data(unfiltered_data)
         # data = list(OrderedDict.fromkeys(unfiltered_data))
 
         create_people(data, url.strip('"'))
         # create_people(data, url.strip('"'))
+
+    creation = time.time() - t1
+    total_time = time.time() - t
+    print('Total time: {}'.format(total_time))
+    print('Garbage: {}, {}%'.format(garbage, round((garbage / total_time) * 100)))
+    print('First replacement: {}, {}%'.format(first_replacement, round((first_replacement / total_time) * 100)))
+    print('Email proc: {}, {}%'.format(email_proc, round((email_proc / total_time) * 100)))
+    print('Data colleciton: {}, {}%'.format(data_collection, round((data_collection / total_time) * 100)))
+    print('Creation: {}, {}%'.format(creation, round((creation / total_time) * 100)))
 
 
 def is_data(entry):
@@ -128,24 +154,69 @@ def filter_data(data):
 
 def remove_garbage(body):
 
+    t = time.time()
     try:
         if body.footer:
             body.footer.decompose()
 
+        footer = time.time() - t
+        t1 = time.time()
+
         if body.header:
             body.header.decompose()
 
-        comments = body.findAll(text=lambda text: isinstance(text, Comment))
-        [comment.extract() for comment in comments]
+        header = time.time() - t1
+        t1 = time.time()
 
-        while body.script:
-            body.script.decompose()
-        while body.style:
-            body.style.decompose()
-        while body.link:
-            body.link.decompose()
-        while body.img:
-            body.img.decompose()
+        # comments =
+        [comment.extract() for comment in body.findAll(text=lambda text: isinstance(text, Comment))]
+
+        comments = time.time() - t1
+        t1 = time.time()
+
+        # while body.script:
+        #     body.script.decompose()
+
+        [x.decompose() for x in body.findAll('script')]
+
+        script = time.time() - t1
+        t1 = time.time()
+
+        # while body.style:
+        #     body.style.decompose()
+
+        [x.decompose() for x in body.findAll('style')]
+
+        style = time.time() - t1
+        t1 = time.time()
+
+        # while body.link:
+        #     body.link.decompose()
+
+        [x.decompose() for x in body.findAll('link')]
+
+        link = time.time() - t1
+        t1 = time.time()
+
+        # while body.img:
+        #     body.img.decompose()
+
+        [x.decompose() for x in body.findAll('img')]
+
+        img = time.time() - t1
+
+        total_time = time.time() - t
+
+        # print('Total time: {}'.format(total_time))
+        # print('Footer: {}, {}%'.format(footer, round((footer / total_time) * 100)))
+        # print('Header: {}, {}%'.format(header, round((header / total_time) * 100)))
+        # print('Comments: {}, {}%'.format(comments, round((comments / total_time) * 100)))
+        # print('Script: {}, {}%'.format(script, round((script / total_time) * 100)))
+        # print('Style: {}, {}%'.format(style, round((style / total_time) * 100)))
+        # print('Link: {}, {}%'.format(link, round((link / total_time) * 100)))
+        # print('Img: {}, {}%'.format(img, round((img / total_time) * 100)))
+
+
     except Exception as e:
         with open(failed_file, "a") as f:
             f.write(body)

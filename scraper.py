@@ -191,8 +191,8 @@ class Scraper:
         processor.get_filter()
         # self.get_urls()
 
-        # self.sync_starter()
-        self.async_starter()
+        self.sync_starter()
+        # self.async_starter()
 
         final = round(time.time() - t)
 
