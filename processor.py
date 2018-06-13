@@ -12,6 +12,7 @@ people = []
 names_set = set()
 last_names_set = set()
 positions_set = set()
+positions_small_set = set()
 filtered = set()
 info_emails = set()
 
@@ -19,7 +20,7 @@ output_file = 'doc.csv'
 failed_file = 'failed.txt'
 names_file = 'names_dict.txt'
 last_names_file = 'last_names_dict.txt'
-# positions_file = "positions.txt"
+positions_small_file = "positions.txt"
 positions_file = 'positions_extended.txt'
 filter_file = 'filter.txt'
 
@@ -37,16 +38,13 @@ stop_words = set(stopwords.words('english'))
 
 def write_to_file():
 
-    if people:
-        person = people.pop(0)
-        info = person.get_info()
-        f = open(output_file, 'a')
+    with open(output_file, 'a') as f:
         writer = csv.writer(f)
-        writer.writerow(info)
-        f.close()
-        # with open(output_file, 'a') as f:
-        #     writer = csv.writer(f)
-        #     writer.writerow(info)
+
+        while people:
+            person = people.pop(0)
+            info = person.get_info()
+            writer.writerow(info)
 
 
 def get_filter():
@@ -213,7 +211,7 @@ def create_people(data, url):
                         if is_name(data[n - 1]) and n > 0:
                             if is_name(data[n - 1]) and is_position(data[n - 1]):
                                 name, position = get_name_and_position(data, n - 1)
-                            else:
+                            elif n > 0:
                                 name = data[n - 1]
                                 n += 1
 
@@ -287,20 +285,26 @@ def create_people(data, url):
                     if n < 0:
                         n = 0
 
+                    for person in people:
+                        if name == person.name and email == person.email:
+                            continue
+
                     name = parse_name(name)
                     email = parse_email(email)
                     phone = parse_phone(phone)
                     person = Person(name, position, phone, email, url)
                     people.append(person)
                     prev = person
-                    write_to_file()
+                    # write_to_file()
                     data = data[n + 1:]
                     misery_count = 0
                     break
 
-                if info_email and (phone or club_name) and info_email not in info_emails:
+                if info_email and info_email not in info_emails:
+                    if club_name is '' or club_name is None:
+                        club_name = 'Club info'
+
                     info_emails.add(info_email)
-                    # print('Info person created')
                     phone = parse_phone(phone)
                     info_email = parse_email(info_email)
                     info_person = Person(club_name, position, phone, info_email, url)
@@ -310,6 +314,8 @@ def create_people(data, url):
         except Exception as e:
             # print(e)
             break
+
+        write_to_file()
 
 
 def get_name_and_position(data, n):
@@ -366,8 +372,10 @@ def is_name(line):
 
     return False
 
+
 def is_club_name(line):
-    words = ['Club', 'Country', 'Road', 'River', 'Bridge', 'Hills']
+    line = line.lower()
+    words = ['club', 'country', 'road', 'river', 'bridge', 'hills', 'concierge', 'reception', 'desk']
     for word in words:
         if word in line:
             return True
@@ -376,28 +384,35 @@ def is_club_name(line):
 
 
 def is_position(line):
-    # line = line.lower().replace("/", "")
-    # line = line.lower().replace("/", " ").replace(':', ' ').replace(',', ' ')
-    # line = re.sub('\s+', ' ', line)
-    # print(line)
 
     if is_email(line):
         return False
 
     line = line.lower()
     new_line = re.sub('[^a-zA-Z]', ' ', line)
-
     no_space = re.sub("[^a-zA-Z]+", '', new_line)
-    # return [position in new_line for position in positions_list]
-    if no_space in positions_set:# or line.strip() in positions_list:
-        return True
+
+    if new_line.isspace():
+        return False
+    #
+    # if no_space in positions_set:
+    #     return True
 
     words = new_line.split(' ')
 
-    # print(positions_list)
+    if no_space in positions_set or set(words).intersection(positions_small_set):
+        return True
+
+    # for word in words:
+    #     if
+
+    matches = 0
+
     for n in range(len(words) - 1):
         adj = words[n] + ' ' + words[n+1]
         if words[n] in positions_set or words[n + 1] in positions_set or adj in positions_set:
+            matches += 1
+        if matches > 1:
             return True
 
     return False
@@ -466,6 +481,10 @@ def get_positions():
     with open(positions_file) as f:
         for line in f:
             positions_set.add(line.strip('\n'))
+
+    with open(positions_small_file) as f:
+        for line in f:
+            positions_small_set.add(line.strip('\n'))
 
     return positions_set
 

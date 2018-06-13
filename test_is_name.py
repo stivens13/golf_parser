@@ -47,6 +47,10 @@ class TestIs_name(TestCase):
     def test_not_name(self):
         self.assertEqual(processor.is_name("Assistant Green Superintendent"), False)
 
+    def test_not_name(self):
+        self.assertEqual(processor.is_name('Tuesday  Sunday Tee times start at  am   pm'), False)
+
+
     def test_not_position(self):
         self.assertEqual(processor.is_position("chef@bhamcc.com"), False)
 
@@ -57,7 +61,7 @@ class TestIs_name(TestCase):
             self.assertEqual(processor.is_position("chef@bhamcc.com"), False)
 
     def test_not_position3(self):
-            self.assertEqual(processor.is_position("chef@bhamcc.com"), False)
+            self.assertEqual(processor.is_position('Events At The Village'), False)
 
 
     def test_is_phone(self):
