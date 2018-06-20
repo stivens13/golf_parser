@@ -17,8 +17,9 @@ bar2 = progressbar.ProgressBar(max_value=progressbar.UnknownLength)
 bar3 = progressbar.ProgressBar(max_value=progressbar.UnknownLength)
 
 
-output_file = "doc.csv"
-failed_file = "failed.txt"
+output_file = 'output/' + 'doc.csv'
+failed_file = 'failed.txt'
+res = 'res/'
 
 
 class Scraper:
@@ -32,8 +33,8 @@ class Scraper:
     urls = []
     bodies = []
 
-    url_file = 'urls.txt'
-    url_test_file = "test_urls.txt"
+    url_file = res + 'urls.txt'
+    url_test_file = res + 'test_urls.txt'
 
     # pages_mult = multiprocessing.Queue()
     # bodies_mult = multiprocessing.Queue()
@@ -47,7 +48,7 @@ class Scraper:
     def create_output_file(self):
         # print(str(datetime.datetime.now()))
         cur_time = str(datetime.datetime.now())[:-7]
-        output_file = 'doc ' + cur_time + '.csv'
+        output_file = 'output/' + 'doc ' + cur_time + '.csv'
         processor.output_file = output_file
         with open(output_file, 'w') as f:
             writer = csv.writer(f)
@@ -133,7 +134,8 @@ class Scraper:
         grab.grabber_not_done = False
         num = grab.pages_grabbed
         final = round(time.time() - t)
-        print('{} urls grabbed in {} sec, {:3f} sec per page'.format(num, final, final / num ))
+        if num:
+            print('{} urls grabbed in {} sec, {:3f} sec per page'.format(num, final, final / num ))
 
     def init_souping(self):
         t = time.time()
@@ -141,7 +143,8 @@ class Scraper:
         gevent.joinall(souping_jobs, timeout=20)
         self.souper_not_done = False
         final = round(time.time() - t)
-        print('{} pages souped in {} sec, {:3f} sec per page'.format(self.souped, final, final /  self.souped))
+        if self.souped:
+            print('{} pages souped in {} sec, {:3f} sec per page'.format(self.souped, final, final / self.souped))
 
     def init_processing(self):
         t = time.time()

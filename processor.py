@@ -16,13 +16,14 @@ positions_small_set = set()
 filtered = set()
 info_emails = set()
 
-output_file = 'doc.csv'
+res_folder = 'res/'
+output_file = 'output/' + 'doc.csv'
 failed_file = 'failed.txt'
-names_file = 'names_dict.txt'
-last_names_file = 'last_names_dict.txt'
-positions_small_file = "positions.txt"
-positions_file = 'positions_extended.txt'
-filter_file = 'filter.txt'
+names_file = res_folder + 'names_dict.txt'
+last_names_file = res_folder + 'last_names_dict.txt'
+positions_small_file = res_folder + 'positions.txt'
+positions_file = res_folder + 'positions_extended.txt'
+filter_file = res_folder + 'filter.txt'
 
 phone_regex1 = ".*?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).*?"
 phone_regex2 = '\D?(\d{0,3}?)\D{0,2}(\d{3})?\D{0,2}(\d{3})\D?(\d{4})$'
@@ -30,10 +31,6 @@ phone_regex3 = '(?:\+?(\d{1})?-?\(?(\d{3})\)?[\s-\.]?)?(\d{3})[\s-\.]?(\d{4})[\s
 email_regex = "[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.[a-z]+"
 
 stop_words = set(stopwords.words('english'))
-# stop_words.add('ext')
-# stop_words.add('real estate')
-# stop_words.add('bar')
-# stop_words.add('of')
 
 
 def write_to_file():
@@ -280,7 +277,7 @@ def create_people(data, url):
                 if not name and not position and not phone and not email:
                     continue
 
-                elif name and (position or phone or email) and name != prev.name and 'club' not in name:
+                elif email and (position or phone or name) and name != prev.name and 'club' not in name:
                     if n < 0:
                         n = 0
 
@@ -410,7 +407,7 @@ def is_position(line):
         # if adj in positions_set:
             matches += 1
             # return True
-        if matches > 3:
+        if matches > 2:
             return True
 
     return False
@@ -435,7 +432,7 @@ def is_email(line):
 
 
 def is_info_email(line):
-    words = ['receptionesk', 'info', 'golfshop', 'proshop', 'shop']
+    words = ['receptionesk', 'info', 'golfshop', 'proshop', 'shop', 'event', 'events', 'tournament']
     if is_email(line):
         for word in words:
             if word in line:
@@ -469,7 +466,7 @@ def get_names():
         for line in f:
             names_set.add(line.strip('\n').lower())
 
-    with open("last_names_dict.txt") as f:
+    with open(last_names_file) as f:
         for line in f:
             # names_set.add(line.strip('\n').lower())
             last_names_set.add(line.strip('\n').lower())
