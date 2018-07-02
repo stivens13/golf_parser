@@ -12,9 +12,13 @@ import datetime
 
 grab = Grabber()
 
-bar1 = progressbar.ProgressBar(max_value=progressbar.UnknownLength)
-bar2 = progressbar.ProgressBar(max_value=progressbar.UnknownLength)
-bar3 = progressbar.ProgressBar(max_value=progressbar.UnknownLength)
+# bar1 = progressbar.ProgressBar(max_value=progressbar.UnknownLength)
+# bar2 = progressbar.ProgressBar(max_value=progressbar.UnknownLength)
+# bar3 = progressbar.ProgressBar(max_value=progressbar.UnknownLength)
+
+logging = True
+processor.logging = logging
+grab.logging = logging
 
 
 output_file = 'output/' + 'doc.csv'
@@ -33,7 +37,8 @@ class Scraper:
     urls = []
     bodies = []
 
-    url_file = res + 'urls.txt'
+    url_file = res + 'all_urls.txt'
+    # url_file = res + 'urls.txt'
     url_test_file = res + 'test_urls.txt'
 
     # pages_mult = multiprocessing.Queue()
@@ -64,7 +69,7 @@ class Scraper:
     def get_soup(self, url):
 
         html = urlopen(url)
-        soup = BeautifulSoup(html, 'lxml') #, "html.parser")
+        soup = BeautifulSoup(html, 'lxml')
         return soup
 
     def soupify(self, page):
@@ -74,10 +79,22 @@ class Scraper:
 
             # self.bodies_mult.put([BeautifulSoup(page, 'html.parser').body, url])
             self.bodies.append([BeautifulSoup(page, 'lxml', parse_only=strain), url])
+
             # self.bodies.append([BeautifulSoup(page, 'html.parser'), url])
 
         except Exception as e:
             print(e)
+
+    def grabbing(self):
+
+        print('Grabbing started')
+
+        url_chunks = [self.urls[x:x + 200] for x in range(0, len(self.urls), 200)]
+
+        for _urls in url_chunks:
+            grabber_jobs = grab.worker(_urls)
+            gevent.joinall(grabber_jobs, timeout=20)
+            grab.print_urls_grabbed()
 
     def souping(self):
 
@@ -91,14 +108,18 @@ class Scraper:
             if grab.more_pages():
                 try:
                     # souping_jobs.append(gevent.spawn(self.soupify, self.pages_mult.get()))
-                    souping_jobs.append(gevent.spawn(self.soupify, grab.get_page()))
+                    page = grab.get_page()
+                    souping_jobs.append(gevent.spawn(self.soupify, page))
                     self.souped += 1
+                    if logging:
+                        print('{} souped {}'.format(self.souped, page.geturl()))
+                    # print('processed {}'.format(page.geturl()))
                 # paging.append(gevent.spawn(soupify, page))
                 except Exception as e:
                     print(e)
             else:
-                # print('souper sleeps for 3 secs')
-                gevent.sleep(3)
+                print('souper sleeps for 1 secs')
+                gevent.sleep(1)
 
         return souping_jobs
 
@@ -120,27 +141,30 @@ class Scraper:
                 except Exception as e:
                     print(e)
             else:
-                # print('processor sleeps for 3 secs')
-                gevent.sleep(3)
+                print('processor sleeps for 1 secs')
+                gevent.sleep(1)
 
         return processing_jobs
 
     def init_grabbing(self):
         t = time.time()
+
         # grabber_jobs = grab.worker(self.urls, self.pages_mult)
         grabber_jobs = grab.worker(self.urls)
         gevent.joinall(grabber_jobs, timeout=20)
-        grab.print_urls_grabbed()
+
+        # self.grabbing()
+
         grab.grabber_not_done = False
         num = grab.pages_grabbed
         final = round(time.time() - t)
         if num:
-            print('{} urls grabbed in {} sec, {:3f} sec per page'.format(num, final, final / num ))
+            print('{} urls grabbed in {} sec, {:3f} sec per page'.format(num, final, final / num))
 
     def init_souping(self):
         t = time.time()
         souping_jobs = self.souping()
-        gevent.joinall(souping_jobs, timeout=20)
+        gevent.joinall(souping_jobs, timeout=40)
         self.souper_not_done = False
         final = round(time.time() - t)
         if self.souped:
@@ -149,7 +173,7 @@ class Scraper:
     def init_processing(self):
         t = time.time()
         processing_jobs = self.processing()
-        gevent.joinall(processing_jobs, timeout=20)
+        gevent.joinall(processing_jobs, timeout=40)
         final = round(time.time() - t)
         if self.processed is not 0:
             print('{} pages processed in {} sec, {:3f} sec per page'.format(self.processed, final, final / self.processed))

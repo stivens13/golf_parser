@@ -6,6 +6,9 @@ from collections import OrderedDict
 from nltk.corpus import stopwords
 import csv
 
+
+logging = True
+
 # people = scraper.people
 people = []
 
@@ -70,7 +73,7 @@ def process_page(body, url):
         print("Url failed: " + url)
         return
 
-    body.prettify()
+    # body.prettify()
 
     for elem in body:
         if elem.string:
@@ -311,7 +314,10 @@ def create_people(data, url):
             # print(e)
             break
 
-        write_to_file()
+    if logging:
+        print('processed {}'.format(url))
+
+    write_to_file()
 
 
 def get_name_and_position(data, n):
