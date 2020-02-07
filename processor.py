@@ -53,11 +53,11 @@ def get_filter():
             filtered.add(line.strip('\n'))
 
 
-def strip_string(str):
-    return str.lstrip().rstrip()
+def strip_string(line):
+    return line.lstrip().rstrip()
 
 
-def process_page(body, url):
+def process_page(body, url, index):
     unfiltered_data = []
 
     # print('processing {}'.format(url))
@@ -101,7 +101,7 @@ def process_page(body, url):
         data = filter_data(unfiltered_data)
         # data = list(OrderedDict.fromkeys(unfiltered_data))
 
-        create_people(data, url.strip('"'))
+        create_people(data, url.strip('"'), index)
         # create_people(data, url.strip('"'))
 
 
@@ -153,7 +153,7 @@ def remove_garbage(body):
     return body
 
 
-def create_people(data, url):
+def create_people(data, url, index):
 
     # print('processing {}'.format(url))
 
@@ -161,7 +161,7 @@ def create_people(data, url):
 
     misery_count = 0
 
-    while(data):
+    while data:
 
         if misery_count > 300:
             break
@@ -277,7 +277,8 @@ def create_people(data, url):
                     pass
                     # print(e, 'from inside')
 
-                if not name and not position and not phone and not email:
+                # if not name and not position and not phone and not email:
+                if not (name or position or phone or email):
                     continue
 
                 elif email and (position or phone or name) and name != prev.name and 'club' not in name:
@@ -289,6 +290,7 @@ def create_people(data, url):
                             continue
 
                     name = parse_name(name)
+                    position = parse_name(position)
                     email = parse_email(email)
                     phone = parse_phone(phone)
                     person = Person(name, position, phone, email, url)
@@ -299,28 +301,29 @@ def create_people(data, url):
                     misery_count = 0
                     break
 
-                if info_email and info_email not in info_emails:
-                    if club_name is '' or club_name is None:
-                        club_name = 'Club info'
-
-                    info_emails.add(info_email)
-                    phone = parse_phone(phone)
-                    info_email = parse_email(info_email)
-                    info_person = Person(club_name, position, phone, info_email, url)
-                    people.append(info_person)
-                    write_to_file()
+                # if info_email and info_email not in info_emails:
+                #     if club_name is '' or club_name is None:
+                #         club_name = 'Club info'
+                #
+                #     info_emails.add(info_email)
+                #     phone = parse_phone(phone)
+                #     info_email = parse_email(info_email)
+                #     info_person = Person(club_name, position, phone, info_email, url)
+                #     people.append(info_person)
+                    # write_to_file()
 
         except Exception as e:
             # print(e)
             break
 
     if logging:
-        print('processed {}'.format(url))
+        print('{} processed {}'.format(index, url))
 
     write_to_file()
 
 
 def get_name_and_position(data, n):
+
     delims = [':', ',', '-', '–']
 
     name = ''
@@ -365,8 +368,25 @@ def in_filter(line):
 
 
 def is_name(line):
-    line = line.lower().strip(':').strip('/')
-    words = line.split(' ')
+
+    words = [word for word in line.strip(':').strip('/').split() if word[0].isupper()]
+    # line = line.lower().strip(':').strip('/')
+    # words = line.split()
+
+    words = (' '.join(words)).lower().split()
+
+    # print(words)
+
+    # new_words = []
+
+    # for word in words:
+    #     # print(word)
+    #     print(word[0], word)
+    #     if word[0].isupper():
+    #         print(word)
+    #         new_words.append(word)
+
+    # print(new_words)
 
     for word in words:
         if (word in names_set or word in last_names_set) and word not in stop_words:
@@ -410,7 +430,6 @@ def is_position(line):
     for n in range(len(words) - 1):
         adj = words[n] + ' ' + words[n+1]
         if words[n] in positions_set or words[n + 1] in positions_set or adj in positions_set:
-        # if adj in positions_set:
             matches += 1
             # return True
         if matches > 2:
@@ -448,7 +467,24 @@ def is_info_email(line):
 
 
 def parse_name(line):
-    return re.sub("[^ a-zA-Z]+", "", strip_string(line))
+    line = re.sub("[^ a-zA-Z]+", "", strip_string(line))
+    #
+    words = line.split()
+
+    words = [word for word in words if word[0].isupper()]
+    #
+    # new_words = []
+    # for word in words:
+    #     if word[0].upper():
+    #         print(word)
+    #         new_words.append(word)
+    # #
+    # print(' '.join(new_words))
+    return ' '.join(words)
+
+
+def parse_position(line):
+    return re.sub("[^ a-zA-Z]+", " ", strip_string(line))
 
 
 def parse_email(line):
@@ -458,13 +494,9 @@ def parse_email(line):
             return word
 
 
-def parse_phone(str):
-    filts = ['|', 'Phone', 'Cell:', '.']
-    for filt in filts:
-        str = str.strip(filt)
-    return str
-
-    # return str.strip('|').strip('Phone')
+def parse_phone(line):
+    return re.sub("[a-zA-Z]+", "", strip_string(line))
+    # return re.sub("[^ 0-9:\-()]+", "", strip_string(line))
 
 
 def get_names():

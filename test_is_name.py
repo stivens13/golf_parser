@@ -43,6 +43,7 @@ class TestIs_name(TestCase):
         self.assertEqual(processor.is_name('per person plus tax'), False)
         self.assertEqual(processor.is_name('Carving Station'), False)
         self.assertEqual(processor.is_name('HTML PUBLIC WCDTD HTML E N'), False)
+        self.assertEqual(processor.is_name(' CHANGES TO MEMBER LOGINS '), False)
 
     def test_not_name(self):
         self.assertEqual(processor.is_name("Assistant Green Superintendent"), False)

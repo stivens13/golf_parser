@@ -1,36 +1,39 @@
+chef
+golf
+admin
+coach
+clerk
 manager
+payroll
+officer
 director
+sergeant
+secretary
 assistant
+attendant
 controller
+supervisor
+instructor
+controller
+accountant
+apprentice
+coordinator
+commissioner
+professional
+receptionist
+professional
+socialdining
 golf services
 executive chef
 superintendent
-chef
-admin
-coach
-supervisor
-coordinator
-professional
-accounts receivable
-payroll
+superintendant
 human resources
 accounts payable
-receptionist
-instructor
-superintendant
-officer
-sergeant
-controller
-accountant
-attendant
+accounts payable
+accounts receivable
+accounts receivable
+payroll human resources
+employmentopportunities
 communications and design
 reception/member services
 communications and design
-professional
-accounts receivable
-payroll human resources
-accounts payable
-apprentice
-golf
-socialdining
-employmentopportunities

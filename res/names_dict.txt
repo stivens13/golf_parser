@@ -27,7 +27,6 @@ ted
 mae
 pat
 guy
-max
 ada
 ian
 ken
@@ -40,7 +39,6 @@ ora
 lou
 iva
 ina
-van
 fay
 dee
 ola
@@ -2229,7 +2227,6 @@ bianca
 bettye
 benito
 barbra
-august
 terrie
 ruthie
 michel
@@ -4028,7 +4025,6 @@ earlean
 dorathy
 donetta
 doloris
-diamond
 devorah
 dennise
 denisha
